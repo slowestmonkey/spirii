@@ -26,7 +26,7 @@ This project is an MVP of a data aggregation microservice that collects transact
 
 ## API Endpoints
 
-> **IMPORTANT**: Before using the endpoints, ensure that the job has aggregated the transactions. For testing purposes, the aggregation interval is set to 10 seconds (instead of the 2 minutes). This means you will see the first results approximately 10 seconds after starting the application.
+[!IMPORTANT]: Before using the endpoints, ensure that the job has aggregated the transactions. For testing purposes, the aggregation interval is set to 10 seconds (instead of the 2 minutes). This means you will see the first results approximately 10 seconds after starting the application.
 
 - `GET /aggregations/users/:userId`: Get aggregated data by user ID.
   Example:
@@ -74,6 +74,9 @@ npm run test
 
 - **Testing (of course)**:
   No integration, end-to-end, or unit tests were implemented due to time constraints. However, testing is crucial for production code to ensure reliability and correctness.
+
+- Cleaner architecture
+  Minimize reliance on external tools and libraries at the service level to simplify maintenance and improve portability.
 
 - **Logging**:
   We should log the states of our job execution and log any failures. This will help in monitoring and debugging the system.
