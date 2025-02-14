@@ -1,36 +1,48 @@
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable } from '@nestjs/common';
-import { Cache } from 'cache-manager';
+import { Injectable } from '@nestjs/common';
 import { Transaction } from 'src/transaction/domain/transaction.type';
 import { TransactionService } from 'src/transaction/transaction.service';
+import { AggregationCacheService } from './aggregation-cache.service';
 import { Aggregation } from './domain/aggregation.type';
 import { PayoutAggregation } from './domain/payout-aggregation.type';
 
 @Injectable()
 export class AggregationService {
-  private readonly userAggregationCacheKey = 'user_aggregation';
-  private readonly payoutAggregationCacheKey = 'payout_aggregations';
-
   private readonly processedTransactions = new Set<string>();
+  private readonly transactionApiRateLimit = 1000;
+  private readonly transactionApiRateDelay = 12000;
 
   constructor(
-    @Inject(CACHE_MANAGER) private cache: Cache,
     private readonly transactionService: TransactionService,
+    private readonly aggregationCacheService: AggregationCacheService,
   ) {}
 
   async runAggregation(startDate: string, endDate: string) {
-    const transactions = await this.transactionService.fetch({
-      startDate,
-      endDate,
-      page: 1,
-      limit: 1000,
-    });
+    let page = 1;
+    let hasMore = true;
+    let transactions: Transaction[] = [];
 
-    const userAggregations = this.aggregate(transactions.items);
+    while (hasMore) {
+      const { items } = await this.transactionService.fetch({
+        startDate,
+        endDate,
+        page,
+        limit: this.transactionApiRateLimit,
+      });
+
+      transactions = transactions.concat(items);
+      hasMore = items.length === this.transactionApiRateLimit;
+      page++;
+
+      if (hasMore) {
+        await this.delay(this.transactionApiRateDelay);
+      }
+    }
+
+    const aggregations = this.aggregate(transactions);
 
     await Promise.all([
-      this.cacheUserAggregations(userAggregations),
-      this.cachePayoutAggregations(userAggregations),
+      this.aggregationCacheService.cacheUserAggregations(aggregations),
+      this.aggregationCacheService.cachePayoutAggregations(aggregations),
     ]);
 
     this.processedTransactions.clear();
@@ -75,42 +87,15 @@ export class AggregationService {
     return aggregations;
   }
 
-  private async cacheUserAggregations(aggregations: Map<string, Aggregation>) {
-    await Promise.all(
-      Array.from(aggregations.entries()).map(async ([userId, aggregation]) => {
-        const cacheKey = `${this.userAggregationCacheKey}_${userId}`;
-
-        await this.cache.set(cacheKey, aggregation);
-      }),
-    );
-  }
-
-  private async cachePayoutAggregations(
-    aggregations: Map<string, Aggregation>,
-  ) {
-    const payoutsAggregations =
-      (await this.cache.get<PayoutAggregation[]>(
-        this.payoutAggregationCacheKey,
-      )) ?? [];
-
-    for (const [userId, userAggregation] of aggregations) {
-      if (userAggregation.payout > 0) {
-        payoutsAggregations.push({ userId, payout: userAggregation.payout });
-      }
-    }
-
-    await this.cache.set(this.payoutAggregationCacheKey, payoutsAggregations);
-  }
-
   async fetchUserAggregation(userId: string): Promise<Aggregation | null> {
-    return this.cache.get(`${this.userAggregationCacheKey}_${userId}`);
+    return this.aggregationCacheService.fetchUserAggregation(userId);
   }
 
   async fetchPayoutAggregations(): Promise<PayoutAggregation[]> {
-    const payoutAggregations = await this.cache.get<PayoutAggregation[]>(
-      this.payoutAggregationCacheKey,
-    );
+    return this.aggregationCacheService.fetchPayoutAggregations();
+  }
 
-    return payoutAggregations ?? [];
+  private delay(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
