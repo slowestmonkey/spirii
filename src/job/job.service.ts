@@ -3,12 +3,11 @@ import { Cron } from '@nestjs/schedule';
 import { AggregationService } from 'src/aggregation/aggregation.service';
 
 @Injectable()
-export class ScheduleService {
+export class JobService {
   constructor(private readonly aggregationService: AggregationService) {}
 
-  // @Cron('*/2 * * * *')
   @Cron('*/10 * * * * *')
-  async handleCron() {
+  async runJob() {
     const startDate = new Date().toISOString();
     const endDate = new Date().toISOString();
 

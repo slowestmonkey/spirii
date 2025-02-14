@@ -4,6 +4,7 @@ import { TransactionService } from 'src/transaction/transaction.service';
 import { AggregationCacheService } from './aggregation-cache.service';
 import { Aggregation } from './domain/aggregation.type';
 import { PayoutAggregation } from './domain/payout-aggregation.type';
+import { UserId } from './domain/user.type';
 
 @Injectable()
 export class AggregationService {
@@ -38,7 +39,7 @@ export class AggregationService {
       }
     }
 
-    const aggregations = this.aggregate(transactions);
+    const aggregations = this.aggregateTransactions(transactions);
 
     await Promise.all([
       this.aggregationCacheService.cacheUserAggregations(aggregations),
@@ -48,8 +49,10 @@ export class AggregationService {
     this.processedTransactions.clear();
   }
 
-  private aggregate(transactions: Transaction[]): Map<string, Aggregation> {
-    const aggregations = new Map<string, Aggregation>();
+  private aggregateTransactions(
+    transactions: Transaction[],
+  ): Map<UserId, Aggregation> {
+    const aggregations = new Map<UserId, Aggregation>();
 
     transactions.forEach((transaction) => {
       if (this.processedTransactions.has(transaction.id)) return;

@@ -37,7 +37,7 @@ export class TransactionService {
           type: 'earned',
           amount: 1.2,
         },
-      ],
+      ] as Transaction[],
       meta: {
         totalItems: 1200,
         itemCount: 3,

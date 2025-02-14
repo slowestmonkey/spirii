@@ -1,5 +1,7 @@
+import { UserId } from './user.type';
+
 export type Aggregation = {
-  userId: string;
+  userId: UserId;
   balance: number;
   earned: number;
   spent: number;

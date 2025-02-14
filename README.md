@@ -7,12 +7,14 @@ This project is an MVP of a data aggregation microservice that collects transact
 ## Installation
 
 1. Clone the repository:
+
    ```bash
    git clone <repository-url>
    cd spirii
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
@@ -24,12 +26,22 @@ This project is an MVP of a data aggregation microservice that collects transact
 
 ## API Endpoints
 
-- `GET /transactions/aggregated/:userId`: Get aggregated data by user ID.
-- `GET /transactions/payout-requests`: Get list of requested payouts.
+- `GET /aggregations/users/:userId`: Get aggregated data by user ID.
+  Example:
+   ```bash
+   curl http://localhost:3000/aggregations/users/074092
+   ```
+
+- `GET /aggregations/payouts`: Get list of requested payouts.
+  Example:
+   ```bash
+   curl http://localhost:3000/aggregations/payouts
+   ```
 
 ## Testing
 
 To run tests:
+
 ```bash
 npm run test
 ```
@@ -40,6 +52,7 @@ npm run test
 - The exchange rate is 1 SCR = 1 EUR.
 
 ## Problems
+
 - logging
 - rate limit = missed transactions
 - testing
