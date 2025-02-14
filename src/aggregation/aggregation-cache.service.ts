@@ -3,6 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { Aggregation } from './domain/aggregation.type';
 import { PayoutAggregation } from './domain/payout-aggregation.type';
+import { UserId } from './domain/user.type';
 
 @Injectable()
 export class AggregationCacheService {
@@ -11,7 +12,7 @@ export class AggregationCacheService {
 
   constructor(@Inject(CACHE_MANAGER) private cache: Cache) {}
 
-  async cacheUserAggregations(aggregations: Map<string, Aggregation>) {
+  async cacheUserAggregations(aggregations: Map<UserId, Aggregation>) {
     await Promise.all(
       Array.from(aggregations.entries()).map(async ([userId, aggregation]) => {
         const cacheKey = `${this.userAggregationCacheKey}_${userId}`;
@@ -21,7 +22,7 @@ export class AggregationCacheService {
     );
   }
 
-  async cachePayoutAggregations(aggregations: Map<string, Aggregation>) {
+  async cachePayoutAggregations(aggregations: Map<UserId, Aggregation>) {
     const payoutAggregations =
       (await this.cache.get<PayoutAggregation[]>(
         this.payoutAggregationsCacheKey,
@@ -36,7 +37,7 @@ export class AggregationCacheService {
     await this.cache.set(this.payoutAggregationsCacheKey, payoutAggregations);
   }
 
-  async fetchUserAggregation(userId: string): Promise<Aggregation | null> {
+  async fetchUserAggregation(userId: UserId): Promise<Aggregation | null> {
     return this.cache.get(`${this.userAggregationCacheKey}_${userId}`);
   }
 

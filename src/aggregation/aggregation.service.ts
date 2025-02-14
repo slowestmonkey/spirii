@@ -90,7 +90,7 @@ export class AggregationService {
     return aggregations;
   }
 
-  async fetchUserAggregation(userId: string): Promise<Aggregation | null> {
+  async fetchUserAggregation(userId: UserId): Promise<Aggregation | null> {
     return this.aggregationCacheService.fetchUserAggregation(userId);
   }
 
